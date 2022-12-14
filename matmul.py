@@ -1,5 +1,7 @@
 """ Matrix multiplication A*B, shape A [n,q], shape B [q,m] """
 import numpy as np
+import threading
+import math
 
 def slice_2d(x, start_row, end_row, start_col, end_col): 
     return [row[start_col:end_col] for row in x[start_row:end_row]]
@@ -17,6 +19,13 @@ def matmul_np(A, B):
 def matmul_row_brute(A, B, C, n, q, m):
     """ Row major brute force """
     for row in range(n):
+        for col in range(m):
+            for k in range(q):
+                C[row][col] += A[row][k] * B[k][col] 
+
+def matmul_row_brute_range(A, B, C, low, high, q, m):
+    """ Row major brute force """
+    for row in range(low, high):
         for col in range(m):
             for k in range(q):
                 C[row][col] += A[row][k] * B[k][col] 
@@ -56,6 +65,21 @@ def matmul_block(A, B, C, n, p, m, k):
                             C[q+row][r+col] += block_A[row][l] * block_B[l][col] 
 
 
-def matmul_thread(A, B, n, q, m):
+def matmul_thread(A, B, C, n_threads, n, q, m):
     """ Matrix mul using threads """
-    pass
+    # total rows n
+    s_thr_block = math.ceil(n/n_threads) 
+    threads = []
+    
+    # create threads
+    for thr_idx in range(n_threads):
+        low = thr_idx*s_thr_block
+        high = (thr_idx+1)*s_thr_block if (thr_idx+1)*s_thr_block <= n else n
+        print(f"thread {thr_idx} computes rows {low} to {high}")
+        thread_i = threading.Thread(target= matmul_row_brute_range, args= (A, B, C, low, high, q, m))
+        thread_i.start()
+        threads.append(thread_i)
+        
+    # join threads
+    for thr_idx in range(n_threads):
+        threads[thr_idx].join()
