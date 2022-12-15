@@ -3,38 +3,46 @@ import numpy as np
 import matrix
 import matmul
 
-def bench(fun, A, B, C, iterations, *args):
-    """ Matrix mul between object A and B"""
+def bench(bench_name, fun, A, B, C, iterations, *args):
+    """ benchmark function func by performing matrix multiplication
+        between matrix A and B storing the value in C, iterations 
+        number of times """
 
     t0 = time.time()
     for _ in range(iterations):
-        C = fun(A, B, C, *args)
+        fun(A, B, C, *args)
     t_tot = time.time() - t0
+    print(bench_name + f" benchmark time is: {t_tot:.3f} s")
     return t_tot
 
 
 if __name__ == '__main__':
 
-    N = 32 
-    A = matrix.randint(N,N)
-    B = matrix.randint(N,N)
-    A_np = np.array(matrix.randint(N,N))
-    B_np = np.array(matrix.randint(N,N))
-    C1 = matrix.zeros(N,N)
-    C2 = matrix.zeros(N,N)
-    C3 = matrix.zeros(N,N)
-    C4 = matrix.zeros(N,N)
+    N = 512
+    k = 64
+    n_threads = 8
+    n_iterations = 1
+    A = matrix.rand(N,N)
+    B = matrix.rand(N,N)
+    A_np = np.array(A)
+    B_np = np.array(B)
+    C_np = A_np @ B_np
 
-    C1 = matmul.matmul_row_brute(A, B, C1, N, N, N)
-    C2 = matmul.matmul_col_brute(A, B, C2, N, N, N)
-    C3 = matmul.matmul_row_factored(A, B, C3, N, N)
-    C4 = matmul.matmul_block(A, B, C4, N, N, N, 4)
+    
+    # function inputs
+    #matmul_row_brute(A, B, C, N, N, N)
+    #matmul_col_brute(A, B, C, N, N, N)
+    #matmul_row_factored(A, B, C, N, N)
+    #matmul_block(A, B, C, N, N, N, k)
+    #matmul_thread(A, B, C, n_threads, N, N, N)
 
-    t_row_brute = bench(matmul.matmul_row_brute, A, B, C1, 100, N, N, N)
-    t_col_brute = bench(matmul.matmul_col_brute, A, B, C2, 100, N, N, N)
-    t_row_factored = bench(matmul.matmul_row_factored, A, B, C3, 100, N, N)
-    t_block = bench(matmul.matmul_block, A, B, C4, 100, N, N)
-
-    print(t_row_brute)
-    print(t_col_brute)
-    print(t_row_factored)
+    C = matrix.zeros(N,N)
+    bench("row brute", matmul.matmul_row_brute, A, B, C, n_iterations, N, N, N)
+    C = matrix.zeros(N,N)
+    bench("col brute", matmul.matmul_col_brute, A, B, C, n_iterations, N, N, N)
+    C = matrix.zeros(N,N)
+    bench("factored row", matmul.matmul_row_factored, A, B, C, n_iterations, N, N)
+    C = matrix.zeros(N,N)
+    bench(f"block = {k}", matmul.matmul_block, A, B, C, n_iterations, N, N, N, k)
+    C = matrix.zeros(N,N)
+    bench(f"thread = {n_threads}", matmul.matmul_thread, A, B, C, n_iterations, n_threads, N, N, N)
