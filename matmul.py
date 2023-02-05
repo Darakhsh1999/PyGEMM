@@ -1,7 +1,8 @@
-""" Matrix multiplication A*B, shape A [n,q], shape B [q,m] """
+""" Implementations of matrix multiplication A*B, shape A [n,q], shape B [q,m] """
 import numpy as np
 import threading
 import math
+
 
 def slice_2d(x, start_row, end_row, start_col, end_col): 
     return [row[start_col:end_col] for row in x[start_row:end_row]]

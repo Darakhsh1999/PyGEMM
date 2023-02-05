@@ -29,13 +29,6 @@ if __name__ == '__main__':
     C_np = A_np @ B_np
 
     
-    # function inputs
-    #matmul_row_brute(A, B, C, N, N, N)
-    #matmul_col_brute(A, B, C, N, N, N)
-    #matmul_row_factored(A, B, C, N, N)
-    #matmul_block(A, B, C, N, N, N, k)
-    #matmul_thread(A, B, C, n_threads, N, N, N)
-
     C = matrix.zeros(N,N)
     bench("row brute", matmul.matmul_row_brute, A, B, C, n_iterations, N, N, N)
     C = matrix.zeros(N,N)
