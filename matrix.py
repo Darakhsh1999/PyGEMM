@@ -46,10 +46,24 @@ class LinearMatrix():
             self.memory = self.N * [0]
         elif type == "ones":
             self.memory = self.N * [1]
+        elif type == "randint":
+            self.memory = [random.randint(0, 1024) for _ in range(self.N)]
+        elif type == "rand":
+            self.memory = [random.random() for _ in range(self.N)]
         elif isinstance(type, (int,float)):
             self.memory = self.N * [type]
         else:
             raise ValueError(f"Unexpected type {type}")
     
+    def to_matrix(self):
+        """ Reshapes linear matrix to standard 2D list nested matrix"""
+        return [[self.memory[row*self.n_cols+col] for col in range(self.n_cols)] for row in range(self.n_rows)]
+    
     def __getitem__(self, idx):
         return self.memory[idx]
+    
+    def __setitem__(self, idx, val):
+        self.memory[idx] = val
+    
+    def __str__(self) -> str:
+        return "[" + ",".join([(f"{x:.4f}" if isinstance(x, float) else str(x)) for x in self.memory]) + "]"

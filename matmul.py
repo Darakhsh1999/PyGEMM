@@ -4,6 +4,7 @@ import math
 import matrix
 import threading
 import numpy as np
+from matrix import LinearMatrix
 
 
 def assert_algorithm(C, C_truth):
@@ -11,6 +12,7 @@ def assert_algorithm(C, C_truth):
     C_np = np.array(C)
     assert C_np.shape == C_truth.shape, f"Invalid shape expected {C_truth.shape}, got {C_np.shape}"
     assert(np.less(np.abs(C_np-C_truth), 0.01).all())
+
 
 def matmul_np(A, B):
     """ numpy internal matmul """
@@ -110,3 +112,12 @@ def matmul_thread(A, B, C, n_threads):
 
 def matmul_process(A, B, C, n_processes):
     pass
+
+def matmul_linear_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
+    """ LinearMatrix brute matmul """
+    n, q, m = A.n_rows, A.n_cols, B.n_cols
+    for row in range(n):
+        for col in range(m):
+            c_idx = row*q + col
+            for k in range(q):
+                C[c_idx] += A[row*q + k] * B[k*q + col] 
