@@ -3,14 +3,10 @@ import numpy as np
 import threading
 import math
 
-
-def slice_2d(x, start_row, end_row, start_col, end_col): 
-    return [row[start_col:end_col] for row in x[start_row:end_row]]
-
 def assert_algorithm(C, C_truth):
     """ Compares own implementation to numpy (ground truth) """
     C_np = np.array(C)
-    assert(C_np.shape == C_truth.shape)
+    assert C_np.shape == C_truth.shape, f"Invalid shape expected {C_truth.shape}, got {C_np.shape}"
     assert(np.less(np.abs(C_np-C_truth), 0.01).all())
 
 def matmul_np(A, B):
@@ -34,10 +30,32 @@ def matmul_col_brute(A, B, C, n, q, m):
 def matmul_row_factored(A, B, C, n, m):
     """ Factored row vector"""
     for row in range(n):
-        v = A[row]
+        a = A[row]
         for col in range(m):
-            for k, v_val in enumerate(v):
-                C[row][col] += v_val * B[k][col] 
+            for k, a_val in enumerate(a):
+                C[row][col] += a_val * B[k][col] 
+
+def matmul_col_factored(A, B, C, n, m):
+    """ Factored row vector"""
+
+    for col in range(m):
+        b = B[col] # TODO FIX
+        for row in range(n):
+            for k, b_val in enumerate(b):
+                C[row][col] += A[row][k] * b_val
+
+def matmul_factored(A, B, C, n, m):
+
+    for row in range(n):
+        a = A[row]
+        for col in range(m):
+            for k in range(q):
+                C[row][col] += A[row][k] * B[k][col] 
+
+    
+
+
+
 
 def matmul_block(A, B, C, n, p, m, k):
     """ Partition matrix into blocks """
@@ -59,7 +77,7 @@ def matmul_block(A, B, C, n, p, m, k):
                             C[q+row][r+col] += block_A[row][l] * block_B[l][col] 
 
 def matmul_row_brute_range(A, B, C, low, high, q, m):
-    """ Row major brute force used for block matrix multiplication """
+    """ Row major brute force used for threaded matrix multiplication """
     for row in range(low, high):
         for col in range(m):
             for k in range(q):
