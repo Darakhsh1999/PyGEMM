@@ -1,7 +1,10 @@
 """ Implementations of matrix multiplication A*B, shape A [n,q], shape B [q,m] """
-import numpy as np
-import threading
+
 import math
+import matrix
+import threading
+import numpy as np
+
 
 def assert_algorithm(C, C_truth):
     """ Compares own implementation to numpy (ground truth) """
@@ -13,44 +16,49 @@ def matmul_np(A, B):
     """ numpy internal matmul """
     return A @ B
 
-def matmul_row_brute(A, B, C, n, q, m):
+def matmul_row_brute(A, B, C):
     """ Row major brute force """
+    n, q, m = len(A), len(A[0]), len(B[0])
     for row in range(n):
         for col in range(m):
             for k in range(q):
                 C[row][col] += A[row][k] * B[k][col] 
 
-def matmul_col_brute(A, B, C, n, q, m):
+def matmul_col_brute(A, B, C):
     """ Column major brute force """
+    n, q, m = len(A), len(A[0]), len(B[0])
     for col in range(m):
         for row in range(n):
             for k in range(q):
                 C[row][col] += A[row][k] * B[k][col] 
 
-def matmul_row_factored(A, B, C, n, m):
-    """ Factored row vector"""
+def matmul_row_factored(A, B, C):
+    """ Factored row vector in A """
+    n, m = len(A), len(B[0])
     for row in range(n):
         a = A[row]
         for col in range(m):
             for k, a_val in enumerate(a):
                 C[row][col] += a_val * B[k][col] 
 
-def matmul_col_factored(A, B, C, n, m):
-    """ Factored row vector"""
-
+def matmul_col_factored(A, B, C):
+    """ Factored column vector in B """
+    n, m = len(A), len(B[0])
     for col in range(m):
-        b = B[col] # TODO FIX
+        b = matrix.get_col(B, col) 
         for row in range(n):
             for k, b_val in enumerate(b):
                 C[row][col] += A[row][k] * b_val
 
-def matmul_factored(A, B, C, n, m):
-
+def matmul_factored(A, B, C):
+    """ Factored both row in A and column in B """
+    n, q, m = len(A), len(A[0]), len(B[0])
     for row in range(n):
         a = A[row]
         for col in range(m):
+            b = matrix.get_col(B, col)
             for k in range(q):
-                C[row][col] += A[row][k] * B[k][col] 
+                C[row][col] += a[k] * b[k]
 
     
 
@@ -68,8 +76,8 @@ def matmul_block(A, B, C, n, p, m, k):
     for q in range(0, n, k):
         for r in range(0, m, k):
             for s in range(0, p, k):
-                block_A = slice_2d(A, q, q+k, s, s+k) # (k,k) 
-                block_B = slice_2d(B, s, s+k, r, r+k) # (k,k) 
+                block_A = matrix.slice_2d(A, q, q+k, s, s+k) # (k,k) 
+                block_B = matrix.slice_2d(B, s, s+k, r, r+k) # (k,k) 
 
                 for row in range(k):
                     for col in range(k):
