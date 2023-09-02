@@ -29,3 +29,27 @@ def slice_2d(x, start_row, end_row, start_col, end_col):
 
 def get_col(x, col_idx):
     return [row[col_idx] for row in x]
+
+### Linear matrix
+class LinearMatrix():
+    """ Matrix stored in linear memory """
+
+    def __init__(self, shape, type="zero"):
+        assert len(shape) == 2
+        self.n_rows, self.n_cols = shape
+        self.N = self.n_rows * self.n_cols
+        self.initialize(type)
+    
+    def initialize(self, type):
+
+        if type == "zeros":
+            self.memory = self.N * [0]
+        elif type == "ones":
+            self.memory = self.N * [1]
+        elif isinstance(type, (int,float)):
+            self.memory = self.N * [type]
+        else:
+            raise ValueError(f"Unexpected type {type}")
+    
+    def __getitem__(self, idx):
+        return self.memory[idx]

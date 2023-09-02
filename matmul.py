@@ -107,3 +107,6 @@ def matmul_thread(A, B, C, n_threads):
     for thr_idx in range(n_threads): threads[thr_idx].join()
     
     return
+
+def matmul_process(A, B, C, n_processes):
+    pass

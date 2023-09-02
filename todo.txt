@@ -1,0 +1,2 @@
+- implement multi process
+- matmult using linear memory
