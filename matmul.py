@@ -60,29 +60,27 @@ def matmul_factored(A, B, C):
             for k in range(q):
                 C[row][col] += a[k] * b[k]
 
-    
-
-
-
-
-def matmul_block(A, B, C, n, p, m, k):
+def matmul_block(A, B, C, block_size):
     """ Partition matrix into blocks """
-    # A (n,p) : (q,s)
-    # B (p,m) : (s,r)
-    # q = n//k, s = p//k, r = m//k
+    # A (n,q) : (p,s)
+    # B (q,m) : (s,r)
+    # p = n//k, s = q//k, r = m//k
+    n, q, m = len(A), len(A[0]), len(B[0])
+    k = block_size
     assert(n % k == 0)
+    assert(q % k == 0)
     assert(m % k == 0)
 
-    for q in range(0, n, k):
-        for r in range(0, m, k):
-            for s in range(0, p, k):
-                block_A = matrix.slice_2d(A, q, q+k, s, s+k) # (k,k) 
+    for p in range(0, n, k): # loop through A rows
+        for r in range(0, m, k): # loop through B cols
+            for s in range(0, q, k): # loop through block rows
+                block_A = matrix.slice_2d(A, p, p+k, s, s+k) # (k,k) 
                 block_B = matrix.slice_2d(B, s, s+k, r, r+k) # (k,k) 
 
                 for row in range(k):
                     for col in range(k):
                         for l in range(k):
-                            C[q+row][r+col] += block_A[row][l] * block_B[l][col] 
+                            C[p+row][r+col] += block_A[row][l] * block_B[l][col] 
 
 def matmul_row_brute_range(A, B, C, low, high, q, m):
     """ Row major brute force used for threaded matrix multiplication """
@@ -91,22 +89,21 @@ def matmul_row_brute_range(A, B, C, low, high, q, m):
             for k in range(q):
                 C[row][col] += A[row][k] * B[k][col] 
 
-def matmul_thread(A, B, C, n_threads, n, q, m):
-    """ Matrix mul using threads """
-    # total rows n
-    s_thr_block = math.ceil(n/n_threads) 
-    threads = []
+def matmul_thread(A, B, C, n_threads):
+    """ Multithreaded matmul """
+    n, q, m = len(A), len(A[0]), len(B[0])
     
     # Create threads
+    s_thr_block = math.ceil(n/n_threads) 
+    threads = []
     for thr_idx in range(n_threads):
         low = thr_idx*s_thr_block
         high = (thr_idx+1)*s_thr_block if (thr_idx+1)*s_thr_block <= n else n
-        thread_i = threading.Thread(target= matmul_row_brute_range, args= (A, B, C, low, high, q, m))
+        thread_i = threading.Thread(target=matmul_row_brute_range, args=(A, B, C, low, high, q, m))
         thread_i.start()
         threads.append(thread_i)
         
     # Join threads
-    for thr_idx in range(n_threads):
-        threads[thr_idx].join()
+    for thr_idx in range(n_threads): threads[thr_idx].join()
     
     return
