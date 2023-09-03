@@ -23,14 +23,6 @@ def rand(n_rows: int, n_cols: int):
     """ Random float matrix using python lists (n_row, n_cols) """
     return [[random.random() for _ in range(n_cols)] for _ in range(n_rows)]
 
-### Helper functions
-
-def slice_2d(x, start_row, end_row, start_col, end_col): 
-    return [row[start_col:end_col] for row in x[start_row:end_row]]
-
-def get_col(x, col_idx):
-    return [row[col_idx] for row in x]
-
 ### Linear matrix
 class LinearMatrix():
     """ Matrix stored in linear memory """
@@ -84,3 +76,14 @@ class LinearMatrix():
         if (self.min is None) or (self.max is None): self.max_min()
         w = max(len(str(self.min)), len(str(self.max))) # width
         return "[" + "\n ".join( ["["+" ".join( [(f"{x:.4f}" if isinstance(x, float) else f"{x:{w}}") for x in self.memory[i*self.n_cols:(1+i)*self.n_cols]])+"]" for i in range(self.n_rows)] ) + "]"
+
+### Helper functions
+
+def slice_2d(x, start_row, end_row, start_col, end_col): 
+    return [row[start_col:end_col] for row in x[start_row:end_row]]
+
+def reshape_2d(x, n_rows, n_cols):
+    return [x[i*n_cols:(i+1)*n_cols] for i in range(n_rows)]
+
+def get_col(x, col_idx):
+    return [row[col_idx] for row in x]

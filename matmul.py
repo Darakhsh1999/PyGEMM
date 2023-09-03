@@ -3,9 +3,9 @@
 import math
 import matrix
 import threading
+import multiprocessing
 import numpy as np
 from matrix import LinearMatrix
-
 
 def assert_algorithm(C, C_truth):
     """ Compares own implementation to numpy (ground truth) """
@@ -13,69 +13,79 @@ def assert_algorithm(C, C_truth):
     assert C_np.shape == C_truth.shape, f"Invalid shape expected {C_truth.shape}, got {C_np.shape}"
     assert(np.less(np.abs(C_np-C_truth), 0.01).all())
 
-
 def matmul_np(A, B):
     """ numpy internal matmul """
     return A @ B
 
-def matmul_row_brute(A, B, C):
+def matmul_row_brute(A, B):
     """ Row major brute force """
-    n, q, m = len(A), len(A[0]), len(B[0])
-    for row in range(n):
-        for col in range(m):
-            for k in range(q):
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = matrix.zeros(N,M)
+    for row in range(N):
+        for col in range(M):
+            for k in range(Q):
                 C[row][col] += A[row][k] * B[k][col] 
+    return C
 
-def matmul_col_brute(A, B, C):
+def matmul_col_brute(A, B):
     """ Column major brute force """
-    n, q, m = len(A), len(A[0]), len(B[0])
-    for col in range(m):
-        for row in range(n):
-            for k in range(q):
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = matrix.zeros(N,M)
+    for col in range(M):
+        for row in range(N):
+            for k in range(Q):
                 C[row][col] += A[row][k] * B[k][col] 
+    return C
 
-def matmul_row_factored(A, B, C):
+def matmul_row_factored(A, B):
     """ Factored row vector in A """
-    n, m = len(A), len(B[0])
-    for row in range(n):
+    N, M = len(A), len(B[0])
+    C = matrix.zeros(N,M)
+    for row in range(N):
         a = A[row]
-        for col in range(m):
+        for col in range(M):
             for k, a_val in enumerate(a):
                 C[row][col] += a_val * B[k][col] 
+    return C
 
-def matmul_col_factored(A, B, C):
+def matmul_col_factored(A, B):
     """ Factored column vector in B """
-    n, m = len(A), len(B[0])
-    for col in range(m):
+    N, M = len(A), len(B[0])
+    C = matrix.zeros(N,M)
+    for col in range(M):
         b = matrix.get_col(B, col) 
-        for row in range(n):
+        for row in range(N):
             for k, b_val in enumerate(b):
                 C[row][col] += A[row][k] * b_val
+    return C
 
-def matmul_factored(A, B, C):
+def matmul_factored(A, B):
     """ Factored both row in A and column in B """
-    n, q, m = len(A), len(A[0]), len(B[0])
-    for row in range(n):
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = matrix.zeros(N,M)
+    for row in range(N):
         a = A[row]
-        for col in range(m):
+        for col in range(M):
             b = matrix.get_col(B, col)
-            for k in range(q):
+            for k in range(Q):
                 C[row][col] += a[k] * b[k]
+    return C
 
-def matmul_block(A, B, C, block_size):
+def matmul_block(A, B, block_size):
     """ Partition matrix into blocks """
     # A (n,q) : (p,s)
     # B (q,m) : (s,r)
     # p = n//k, s = q//k, r = m//k
-    n, q, m = len(A), len(A[0]), len(B[0])
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = matrix.zeros(N,M)
     k = block_size
-    assert(n % k == 0)
-    assert(q % k == 0)
-    assert(m % k == 0)
+    assert(N % k == 0)
+    assert(Q % k == 0)
+    assert(M % k == 0)
 
-    for p in range(0, n, k): # loop through A rows
-        for r in range(0, m, k): # loop through B cols
-            for s in range(0, q, k): # loop through block rows
+    for p in range(0, N, k): # loop through A rows
+        for r in range(0, M, k): # loop through B cols
+            for s in range(0, Q, k): # loop through block rows
                 block_A = matrix.slice_2d(A, p, p+k, s, s+k) # (k,k) 
                 block_B = matrix.slice_2d(B, s, s+k, r, r+k) # (k,k) 
 
@@ -83,6 +93,7 @@ def matmul_block(A, B, C, block_size):
                     for col in range(k):
                         for l in range(k):
                             C[p+row][r+col] += block_A[row][l] * block_B[l][col] 
+    return C
 
 def matmul_row_brute_range(A, B, C, low, high, q, m):
     """ Row major brute force used for threaded matrix multiplication """
@@ -91,42 +102,70 @@ def matmul_row_brute_range(A, B, C, low, high, q, m):
             for k in range(q):
                 C[row][col] += A[row][k] * B[k][col] 
 
-def matmul_thread(A, B, C, n_threads):
+def matmul_thread(A, B, n_threads):
     """ Multithreaded matmul """
-    n, q, m = len(A), len(A[0]), len(B[0])
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = matrix.zeros(N,M)
     
     # Create threads
-    s_thr_block = math.ceil(n/n_threads) 
+    s_block = math.ceil(N/n_threads) 
     threads = []
     for thr_idx in range(n_threads):
-        low = thr_idx*s_thr_block
-        high = (thr_idx+1)*s_thr_block if (thr_idx+1)*s_thr_block <= n else n
-        thread_i = threading.Thread(target=matmul_row_brute_range, args=(A, B, C, low, high, q, m))
+        low = thr_idx*s_block
+        high = (thr_idx+1)*s_block if (thr_idx+1)*s_block <= N else N
+        thread_i = threading.Thread(target=matmul_row_brute_range, args=(A, B, C, low, high, Q, M))
         thread_i.start()
         threads.append(thread_i)
         
     # Join threads
     for thr_idx in range(n_threads): threads[thr_idx].join()
-    
-    return
+    return C
 
-def matmul_process(A, B, C, n_processes):
-    pass
-
-def matmul_linear_row_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
-    """ LinearMatrix brute matmul """
-    n, q, m = A.n_rows, A.n_cols, B.n_cols
-    for row in range(n):
+def matmul_row_brute_range_process(A, B, C, low, high, q, m):
+    """ Row major brute force used for threaded matrix multiplication """
+    # A [N,Q], B [Q,M], C [N,M]
+    for row in range(low, high):
         for col in range(m):
-            c_idx = row*m + col
             for k in range(q):
-                C[c_idx] += A[row*q + k] * B[k*m + col] 
+                C[row*m + col] += A[row][k] * B[k][col] 
 
-def matmul_linear_col_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
+def matmul_process(A, B, n_processes):
+    N, Q, M = len(A), len(A[0]), len(B[0])
+    C = multiprocessing.Array("i", N*M) if isinstance(A[0][0], int) else multiprocessing.Array("d", N*M)
+
+    # Create processes
+    s_block = math.ceil(N/n_processes) 
+    processes = []
+    for p_idx in range(n_processes):
+        low = p_idx*s_block
+        high = (p_idx+1)*s_block if (p_idx+1)*s_block <= N else N
+        p_i = multiprocessing.Process(target=matmul_row_brute_range_process, args=(A, B, C, low, high, Q, M))
+        p_i.start()
+        processes.append(p_i)
+        
+    for p_idx in range(n_processes): processes[p_idx].join() # Join processes
+
+    C = matrix.reshape_2d(C[:], n_rows=N, n_cols=M)
+    return C
+
+def matmul_linear_row_brute(A: LinearMatrix, B: LinearMatrix):
     """ LinearMatrix brute matmul """
-    n, q, m = A.n_rows, A.n_cols, B.n_cols
-    for col in range(m):
-        for row in range(n):
-            c_idx = row*m + col
-            for k in range(q):
-                C[c_idx] += A[row*q + k] * B[k*m + col] 
+    N, Q, M = A.n_rows, A.n_cols, B.n_cols
+    C = LinearMatrix((N,M), "zeros")
+    for row in range(N):
+        for col in range(M):
+            c_idx = row*M + col
+            for k in range(Q):
+                C[c_idx] += A[row*Q + k] * B[k*M + col] 
+    return C
+
+def matmul_linear_col_brute(A: LinearMatrix, B: LinearMatrix):
+    """ LinearMatrix brute matmul """
+    N, Q, M = A.n_rows, A.n_cols, B.n_cols
+    C = LinearMatrix((N,M), "zeros")
+    for col in range(M):
+        for row in range(N):
+            c_idx = row*M + col
+            for k in range(Q):
+                C[c_idx] += A[row*Q + k] * B[k*M + col] 
+    return C

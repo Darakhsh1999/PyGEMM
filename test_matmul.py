@@ -1,64 +1,62 @@
 import matmul
 import matrix
 import numpy as np
+import multiprocessing
 
-N = 128
-Q = 64
-M = 32
+if __name__ == "__main__":
 
-A = matrix.randint(N,Q)
-B = matrix.randint(Q,M)
-C_target = np.array(A) @ np.array(B) # ground truth
+    N = 128
+    Q = 64
+    M = 32
 
-A_lin = matrix.LinearMatrix((N,Q), "randint")
-B_lin = matrix.LinearMatrix((Q,M), "randint")
-C_target_lin = np.array(A_lin.to_matrix()) @ np.array(B_lin.to_matrix())
+    A = matrix.randint(N,Q)
+    B = matrix.randint(Q,M)
+    C_target = np.array(A) @ np.array(B) # ground truth
+
+    A_lin = matrix.LinearMatrix((N,Q), "randint")
+    B_lin = matrix.LinearMatrix((Q,M), "randint")
+    C_target_lin = np.array(A_lin.to_matrix()) @ np.array(B_lin.to_matrix())
 
 
 
-# Row brute
-C = matrix.zeros(N,M)
-matmul.matmul_row_brute(A, B, C)
-matmul.assert_algorithm(C, C_target)
+    # Row brute
+    C = matmul.matmul_row_brute(A, B)
+    matmul.assert_algorithm(C, C_target)
 
-# Col brute
-C = matrix.zeros(N,M)
-matmul.matmul_col_brute(A, B, C)
-matmul.assert_algorithm(C, C_target)
+    # Col brute
+    C = matmul.matmul_col_brute(A, B)
+    matmul.assert_algorithm(C, C_target)
 
-# Row factored
-C = matrix.zeros(N,M)
-matmul.matmul_row_factored(A, B, C)
-matmul.assert_algorithm(C, C_target)
+    # Row factored
+    C = matmul.matmul_row_factored(A, B)
+    matmul.assert_algorithm(C, C_target)
 
-# Col factored
-C = matrix.zeros(N,M)
-matmul.matmul_col_factored(A, B, C)
-matmul.assert_algorithm(C, C_target)
+    # Col factored
+    C = matmul.matmul_col_factored(A, B)
+    matmul.assert_algorithm(C, C_target)
 
-# Factored
-C = matrix.zeros(N,M)
-matmul.matmul_factored(A, B, C)
-matmul.assert_algorithm(C, C_target)
+    # Factored
+    C = matmul.matmul_factored(A, B)
+    matmul.assert_algorithm(C, C_target)
 
-# Block 
-C = matrix.zeros(N,M)
-matmul.matmul_block(A, B, C, block_size=8)
-matmul.assert_algorithm(C, C_target)
+    # Block 
+    C = matmul.matmul_block(A, B, block_size=8)
+    matmul.assert_algorithm(C, C_target)
 
-# Threading 
-C = matrix.zeros(N,M)
-matmul.matmul_thread(A, B, C, n_threads=4)
-matmul.assert_algorithm(C, C_target)
+    # Multithreading 
+    C = matmul.matmul_thread(A, B, n_threads=4)
+    matmul.assert_algorithm(C, C_target)
 
-# LinearMatrix row brute
-C_lin = matrix.LinearMatrix((N,M), "zeros")
-matmul.matmul_linear_row_brute(A_lin, B_lin, C_lin)
-matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+    # Multiprocessing 
+    C = matmul.matmul_process(A, B, n_processes=4)
+    matmul.assert_algorithm(C, C_target)
 
-# LinearMatrix col brute
-C_lin = matrix.LinearMatrix((N,M), "zeros")
-matmul.matmul_linear_col_brute(A_lin, B_lin, C_lin)
-matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+    # LinearMatrix row brute
+    C_lin = matmul.matmul_linear_row_brute(A_lin, B_lin)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
 
-print("Passed all tests!")
+    # LinearMatrix col brute
+    C_lin = matmul.matmul_linear_col_brute(A_lin, B_lin)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    print("Passed all tests!")
