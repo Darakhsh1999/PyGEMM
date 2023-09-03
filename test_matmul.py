@@ -1,7 +1,6 @@
 import matmul
 import matrix
 import numpy as np
-import multiprocessing
 
 if __name__ == "__main__":
 
@@ -16,8 +15,6 @@ if __name__ == "__main__":
     A_lin = matrix.LinearMatrix((N,Q), "randint")
     B_lin = matrix.LinearMatrix((Q,M), "randint")
     C_target_lin = np.array(A_lin.to_matrix()) @ np.array(B_lin.to_matrix())
-
-
 
     # Row brute
     C = matmul.matmul_row_brute(A, B)
@@ -58,5 +55,25 @@ if __name__ == "__main__":
     # LinearMatrix col brute
     C_lin = matmul.matmul_linear_col_brute(A_lin, B_lin)
     matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    # LinearMatrix row factored
+    C_lin = matmul.matmul_linear_row_factored(A_lin, B_lin)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    # LinearMatrix col factored
+    C_lin = matmul.matmul_linear_col_factored(A_lin, B_lin)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    # LinearMatrix factored
+    C_lin = matmul.matmul_linear_factored(A_lin, B_lin)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    # LinearMatrix block
+    C_lin = matmul.matmul_linear_block(A_lin, B_lin, block_size=8)
+    matmul.assert_algorithm(C_lin.to_matrix(), C_target_lin)
+
+    # LinearMatrix multiprocessing
+    C_lin = matmul.matmul_linear_process(A_lin, B_lin, n_processes=4)
+    matmul.assert_algorithm(C_lin, C_target_lin)
 
     print("Passed all tests!")

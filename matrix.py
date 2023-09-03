@@ -27,7 +27,7 @@ def rand(n_rows: int, n_cols: int):
 class LinearMatrix():
     """ Matrix stored in linear memory """
 
-    def __init__(self, shape, type="zero"):
+    def __init__(self, shape, type="zeros"):
         assert len(shape) == 2
         self.n_rows, self.n_cols = shape
         self.N = self.n_rows * self.n_cols
@@ -61,6 +61,15 @@ class LinearMatrix():
     def to_matrix(self):
         """ Reshapes linear matrix to standard 2D list nested matrix"""
         return [[self.memory[row*self.n_cols+col] for col in range(self.n_cols)] for row in range(self.n_rows)]
+    
+    def slice_2d(self, p, s, k):
+        """ Takes a 2d block of size k with (0,0) element at (p,s) """
+        block = []
+        for k_idx in range(k):
+            start = (p+k_idx)*self.n_cols + s
+            end = start + k
+            block += self.memory[slice(start, end)]
+        return block
     
     def reshape(self, shape):
         """ General version of to_matrix() """
