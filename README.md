@@ -9,6 +9,6 @@ Matrix multiplication using <code>threading</code> module. Computation time is i
 
 ![image2](threading_bench.png)
 
-Matrix multiplication using <code>multiprocessing</code> module. Computation time is increasing with increasing number of worker processes meaning overhead outweight the gains from parallelism.
+Matrix multiplication using <code>multiprocessing</code> module. Computation time is increasing with increasing number of worker processes meaning overhead time outweighs the gains from parallelization.
 
 ![image3](multiprocess_bench.png)
