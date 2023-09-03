@@ -1,3 +1,4 @@
+import math
 import random
 
 ### Static matrices
@@ -38,6 +39,7 @@ class LinearMatrix():
         assert len(shape) == 2
         self.n_rows, self.n_cols = shape
         self.N = self.n_rows * self.n_cols
+        self.min, self.max = None, None
         self.initialize(type)
     
     def initialize(self, type):
@@ -55,9 +57,22 @@ class LinearMatrix():
         else:
             raise ValueError(f"Unexpected type {type}")
     
+    def max_min(self):
+        """ Find max and min value in matrix """
+        min, max = math.inf, -math.inf
+        for x in self.memory:
+            if x < min: min = x
+            if x > max: max = x
+        
+        self.min, self.max = min, max
+    
     def to_matrix(self):
         """ Reshapes linear matrix to standard 2D list nested matrix"""
         return [[self.memory[row*self.n_cols+col] for col in range(self.n_cols)] for row in range(self.n_rows)]
+    
+    def reshape(self, shape):
+        """ General version of to_matrix() """
+        pass
     
     def __getitem__(self, idx):
         return self.memory[idx]
@@ -66,4 +81,6 @@ class LinearMatrix():
         self.memory[idx] = val
     
     def __str__(self) -> str:
-        return "[" + ",".join([(f"{x:.4f}" if isinstance(x, float) else str(x)) for x in self.memory]) + "]"
+        if (self.min is None) or (self.max is None): self.max_min()
+        w = max(len(str(self.min)), len(str(self.max))) # width
+        return "[" + "\n ".join( ["["+" ".join( [(f"{x:.4f}" if isinstance(x, float) else f"{x:{w}}") for x in self.memory[i*self.n_cols:(1+i)*self.n_cols]])+"]" for i in range(self.n_rows)] ) + "]"

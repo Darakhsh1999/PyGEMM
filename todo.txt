@@ -1,2 +1,1 @@
 - implement multi process
-- reshape function for linearmatrix

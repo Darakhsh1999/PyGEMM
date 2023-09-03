@@ -113,11 +113,20 @@ def matmul_thread(A, B, C, n_threads):
 def matmul_process(A, B, C, n_processes):
     pass
 
-def matmul_linear_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
+def matmul_linear_row_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
     """ LinearMatrix brute matmul """
     n, q, m = A.n_rows, A.n_cols, B.n_cols
     for row in range(n):
         for col in range(m):
-            c_idx = row*q + col
+            c_idx = row*m + col
             for k in range(q):
-                C[c_idx] += A[row*q + k] * B[k*q + col] 
+                C[c_idx] += A[row*q + k] * B[k*m + col] 
+
+def matmul_linear_col_brute(A: LinearMatrix, B: LinearMatrix, C: LinearMatrix):
+    """ LinearMatrix brute matmul """
+    n, q, m = A.n_rows, A.n_cols, B.n_cols
+    for col in range(m):
+        for row in range(n):
+            c_idx = row*m + col
+            for k in range(q):
+                C[c_idx] += A[row*q + k] * B[k*m + col] 

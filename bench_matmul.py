@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bench import bench
 
-n_iterations = 100
+n_iterations = 10
 N = [16,32,64,128,256,512]
+N = np.arange(10,100)
 T = np.zeros((5,len(N)))
 
 for n_idx, n in enumerate(N):
